@@ -153,7 +153,7 @@ describe("solana-pdas", () => {
     // NOTE This requires same args i.e., Context, color, system
     // NOTE We're technically creating a ledger account located at
     // this PDA address!
-    program.methods
+    await program.methods
       .createLedger(color)
       .accounts({
         // Q: Do I use snake_case or camelCase?
