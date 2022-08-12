@@ -34,6 +34,14 @@ pub struct CreateLedger<'info> {
 
 #[derive(Accounts)]
 pub struct ModifyLedger<'info> {
+    // NOTE Anchor will check that this ledger_account has ALREADY been created (CheckedAccount??)
+    // Q: Is this why in some other projects we use UncheckedAccount as the type?
+    // For example, in MintNft struct, we have:
+    // ==
+    // #[account(mut)]
+    // pub token_account = UncheckedAccount<'info>
+    // ==
+    // since Anchor will eventually create and initialize the token_account.
     #[account(mut)]
     pub ledger_account: Account<'info, Ledger>,
     #[account(mut)]

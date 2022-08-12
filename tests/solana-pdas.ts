@@ -43,7 +43,7 @@
 //       .rpc();
 //   }
 
-//   async function modifyLedger(
+//   async function modifyLedgerAccount(
 //     color: string,
 //     newBalance: number,
 //     wallet: anchor.web3.Keypair
@@ -72,7 +72,7 @@
 //     );
 
 //     await program.methods
-//       .modifyLedger(newBalance)
+//       .modifyLedgerAccount(newBalance)
 //       .accounts({
 //         ledgerAccount: pda,
 //         wallet: wallet.publicKey,
@@ -88,13 +88,13 @@
 
 //   it("An example of PDAs in action", async () => {
 //     const testKeypair1 = await generateKeypair();
-//     await modifyLedger("red", 2, testKeypair1);
-//     await modifyLedger("red", 4, testKeypair1);
-//     await modifyLedger("blue", 2, testKeypair1);
+//     await modifyLedgerAccount("red", 2, testKeypair1);
+//     await modifyLedgerAccount("red", 4, testKeypair1);
+//     await modifyLedgerAccount("blue", 2, testKeypair1);
 
 //     const testKeypair2 = await generateKeypair();
-//     await modifyLedger("red", 3, testKeypair2);
-//     await modifyLedger("green", 3, testKeypair2);
+//     await modifyLedgerAccount("red", 3, testKeypair2);
+//     await modifyLedgerAccount("green", 3, testKeypair2);
 //   });
 // });
 
@@ -137,7 +137,7 @@ describe("solana-pdas", () => {
     // NOTE pubkey is actually provider.wallet.publicKey
     let [pda, _] = await anchor.web3.PublicKey.findProgramAddress(
       [pubkey.toBuffer(), Buffer.from("_"), Buffer.from(color)],
-      program.programId // The program that will own the PDA
+      program.programId // The program that we want to OWN the PDA
     );
 
     return pda;
@@ -161,12 +161,13 @@ describe("solana-pdas", () => {
         // A: Looks like I use camelCase...
         ledgerAccount: pda,
         wallet: wallet.publicKey,
+        // NOTE Anchor automatically adds System Program (and other programs if required)
       })
       .signers([wallet])
       .rpc();
   }
 
-  async function modifyLedger(
+  async function modifyLedgerAccount(
     color: string,
     newBalance: number,
     wallet: anchor.web3.Keypair
@@ -178,14 +179,14 @@ describe("solana-pdas", () => {
     let pda = await derivePda(color, wallet.publicKey);
 
     // 2. Try to retreive PDA account data if it exists
-    // NOTE We're technically seeing if our PDA address has a
-    // ledger account at its location (address)
     console.log(
       `Checking if account ${shortKey(pda)} exists for color: ${color}...`
     );
     try {
+      // NOTE We're technically seeing if our PDA address has a
+      // ledger account at its location (address)
       data = await program.account.ledger.fetch(pda);
-      console.log(`Account exists with data: ${data}`);
+      console.log(`Account already exists!`);
     } catch (e) {
       // console.log(e);
       console.log(`Account ${shortKey(pda)} does NOT exist!`);
@@ -196,7 +197,10 @@ describe("solana-pdas", () => {
       data = await program.account.ledger.fetch(pda);
     }
 
-    console.log("Success! Our PDA has a ledger account with data:\n");
+    console.log(
+      `SUCCESS! Wallet: ${shortKey(wallet.publicKey)} -- PDA: ${shortKey(pda)} `
+    );
+    console.log("Our PDA has a ledger account with data:\n");
     console.log(`    Color: ${data.color}   Balance: ${data.balance}`);
     console.log(
       `Modifying balance of ${data.color} from ${data.balance} to ${newBalance}`
@@ -215,7 +219,10 @@ describe("solana-pdas", () => {
 
     // 4. Retrieve the updated data one last time
     data = await program.account.ledger.fetch(pda);
-    console.log(`Updated data for account located at ${pda}`);
+    // console.log(`Updated data for account located at:`);
+    console.log(
+      `UPDATED! Wallet: ${shortKey(wallet.publicKey)} -- PDA: ${shortKey(pda)} `
+    );
     console.log(`    Color: ${data.color}   Balance: ${data.balance}`);
     console.log("Successfully modified ledger account!");
   }
@@ -223,13 +230,15 @@ describe("solana-pdas", () => {
   it("An example of PDAs in action", async () => {
     // Q: Is this new keypair essentially representing another
     // wallet???? Which is then used to create/modify ledger accounts?
+    // A: YES! We need a Keypair (Wallet) to sign these transactions,
+    // so this is a quick/easy way to simulate multiple users.
     const testKeypair1 = await generateKeypair();
-    await modifyLedger("red", 2, testKeypair1);
-    await modifyLedger("red", 4, testKeypair1);
-    await modifyLedger("blue", 3, testKeypair1);
+    await modifyLedgerAccount("red", 2, testKeypair1);
+    await modifyLedgerAccount("red", 4, testKeypair1);
+    await modifyLedgerAccount("blue", 3, testKeypair1);
 
     const testKeypair2 = await generateKeypair();
-    await modifyLedger("red", 3, testKeypair2);
-    await modifyLedger("green", 5, testKeypair2);
+    await modifyLedgerAccount("red", 3, testKeypair2);
+    await modifyLedgerAccount("green", 5, testKeypair2);
   });
 });
