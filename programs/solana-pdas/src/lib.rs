@@ -50,6 +50,8 @@ pub struct ModifyLedger<'info> {
 
 #[account]
 pub struct Ledger {
+    // NOTE The Cookbook says it's common to store the bump seed in PDA account data itself!
+    // pub bump_seed: u8;
     pub color: String,
     pub balance: u32,
 }
